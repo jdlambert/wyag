@@ -20,7 +20,7 @@ def kvlm_parse(raw, start=0, kvs=None):
     # means the remainder of the data is the message.
     if (space < 0) or (newline < space):
         assert newline == start
-        kvs[b""] = [raw[start + 1:]]
+        kvs[b""] = [raw[start + 1 :]]
         return kvs
 
     # Recursive case
@@ -133,11 +133,72 @@ class GitBlob(GitObject):
     def deserialize(self, data):
         self.blobdata = data
 
+
 class GitCommit(GitObject):
-    fmt=b'commit'
+    fmt = b"commit"
 
     def deserialize(self, data):
         self.kvlm = kvlm_parse(data)
 
     def serialize(self):
         return kvlm_serialize(self.kvlm)
+
+
+class GitTreeLeaf:
+    def __init__(self, mode, path, sha):
+        self.mode = mode
+        self.path = path
+        self.sha = sha
+
+
+def tree_parse_one(raw, start=0):
+    # Find the space terminator of the mode
+    x = raw.find(b" ", start)
+    assert x - start is 5 or x - start is 6
+
+    # Read the mode
+    mode = raw[start:x]
+
+    # Find the NULL terminator of the path
+    y = raw.find(b"\x00", x)
+    # and read the path
+    path = raw[x + 1 : y]
+
+    # Read the SHA and convert to an hex string
+    # hex() adds 0x in front, we don't want that.
+    sha = hex(int.from_bytes(raw[y + 1 : y + 21], "big"))[2:]
+    return y + 21, GitTreeLeaf(mode, path, sha)
+
+
+def tree_parse(raw):
+    pos = 0
+    ret = list()
+    while pos < len(raw):
+        pos, data = tree_parse_one(raw, pos)
+        ret.append(data)
+
+    return ret
+
+
+def tree_serialize(obj):
+    # @FIXME Add serializer!
+    return "".join(
+        [
+            item.mode
+            + b" "
+            + item.path
+            + b"\x00"
+            + int(item.sha, 16).to_bytes(20, byteorder="big")
+            for item in obj.items
+        ]
+    )
+
+
+class GitTree(GitObject):
+    fmt = b"tree"
+
+    def deserialize(self, data):
+        self.items = tree_parse(data)
+
+    def serialize(self):
+        return tree_serialize(self)

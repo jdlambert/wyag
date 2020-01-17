@@ -5,6 +5,7 @@ import zlib
 
 from GitObject import GitObject, GitCommit
 
+
 class GitRepository:
     """A git repository"""
 
@@ -112,13 +113,13 @@ class GitRepository:
         seen.add(sha)
 
         commit = self.object_read(sha)
-        assert commit.fmt == b'commit'
+        assert commit.fmt == b"commit"
 
-        if b'parent' not in commit.kvlm.keys():
+        if b"parent" not in commit.kvlm.keys():
             # Base case: the initial commit.
             return
 
-        parents = commit.kvlm[b'parent']
+        parents = commit.kvlm[b"parent"]
 
         for parent in parents:
             parent = parent.decode("ascii")

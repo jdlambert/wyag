@@ -19,8 +19,8 @@ class Handlers:
             print(sha)
 
     def log(args):
-      repo = GitRepository.find()
+        repo = GitRepository.find()
 
-      print("digraph wyaglog{")
-      repo.log_graphviz(repo.object_find(args.commit))
-      print("}")
+        print("digraph wyaglog{")
+        repo.log_graphviz(repo.object_find(args.commit))
+        print("}")

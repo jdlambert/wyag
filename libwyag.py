@@ -49,10 +49,7 @@ argsp.add_argument(
 argsp.add_argument("path", help="Read object from <file>")
 
 argsp = argsubparsers.add_parser("log", help="Display history of a given commit.")
-argsp.add_argument("commit",
-                   default="HEAD",
-                   nargs="?",
-                   help="Commit to start at.")
+argsp.add_argument("commit", default="HEAD", nargs="?", help="Commit to start at.")
 
 
 def main(argv=sys.argv[1:]):
