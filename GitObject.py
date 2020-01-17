@@ -1,5 +1,64 @@
 import hashlib
 import zlib
+import collections
+
+
+def kvlm_parse(raw, start=0, kvs=None):
+    if not kvs:
+        kvs = collections.OrderedDict()
+
+    # We search for the next space and the next newline.
+    space = raw.find(b" ", start)
+    newline = raw.find(b"\n", start)
+
+    # If space appears before newline, we have a keyword.
+
+    # Base case
+    # =========
+    # If newline appears first (or there's no space at all, in which
+    # case find returns -1), we assume a blank line.  A blank line
+    # means the remainder of the data is the message.
+    if (space < 0) or (newline < space):
+        assert nl == start
+        kvs[b""] = raw[start + 1 :]
+        return dct
+
+    # Recursive case
+    # ==============
+    # we read a key-value pair and recurse for the next.
+    key = raw[start:space]
+
+    # Find the end of the value.  Continuation lines begin with a
+    # space, so we loop until we find a "\n" not followed by a space.
+    end = start
+    while True:
+        end = raw.find(b"\n", end + 1)
+        if raw[end + 1] != ord(" "):
+            break
+
+    # Grab the value
+    # Also, drop the leading space on continuation lines
+    value = raw[space + 1 : end].replace(b"\n ", b"\n")
+
+    # Don't overwrite existing data contents
+    if key in kvs:
+        kvs[key].append(value)
+    else:
+        kvs[key] = [value]
+
+    return kvlm_parse(raw, start=(end + 1), kvs=kvs)
+
+
+def kvlm_serialize(kvlm):
+    return b"\n".join(
+        [
+            key + b" " + val.replace(b"\n", b"\n ")
+            for key, vals in kvlm
+            if key != b""
+            for val in vals
+        ]
+        + kvlm[b""]
+    )
 
 
 class GitObject:
