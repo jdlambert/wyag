@@ -1,8 +1,9 @@
 import os
 import configparser
+import zlib
 
 
-class GitRepository(object):
+class GitRepository:
     """A git repository"""
 
     worktree = None
@@ -70,9 +71,9 @@ class GitRepository(object):
 
         if os.path.exists(repo.worktree):
             if not os.path.isdir(repo.worktree):
-                raise Exception("%s is not a directory!" % path)
+                raise Exception(f"{path} is not a directory!")
             if os.listdir(repo.worktree):
-                raise Exception("%s is not empty!" % path)
+                raise Exception(f"{path} is not empty!")
         else:
             os.makedirs(repo.worktree)
 
@@ -96,6 +97,43 @@ class GitRepository(object):
             config.write(f)
 
         return repo
+
+    def object_read(self, sha):
+        """Read object object_id from Git repository repo.  Return a
+        GitObject whose exact type depends on the object."""
+
+        path = repo.repo_file("objects", sha[0:2], sha[2:])
+
+        with open(path, "rb") as f:
+            raw = zlib.decompress(f.read())
+
+            # Read object type
+            x = raw.find(b" ")
+            fmt = raw[0:x]
+
+            # Read and validate object size
+            y = raw.find(b"\x00", x)
+            size = int(raw[x:y].decode("ascii"))
+            if size != len(raw) - y - 1:
+                raise Exception(f"Malformed object {sha}: bad length")
+
+            # Pick constructor
+            if fmt == b"commit":
+                c = GitCommit
+            elif fmt == b"tree":
+                c = GitTree
+            elif fmt == b"tag":
+                c = GitTag
+            elif fmt == b"blob":
+                c = GitBlob
+            else:
+                raise Exception(f"Unknown type {fmt.decode('ascii')} for object {sha}")
+
+            # Call constructor and return object
+            return c(repo, raw[y + 1 :])
+
+    def object_find(self, name, fmt=None, follow=True):
+        return name
 
     @staticmethod
     def default_config():
