@@ -1,6 +1,7 @@
 import os
 import configparser
 
+
 class GitRepository(object):
     """A git repository"""
 
