@@ -57,6 +57,8 @@ argsp = argsubparsers.add_parser(
 argsp.add_argument("commit", help="The commit or tree to checkout.")
 argsp.add_argument("path", help="The EMPTY directory to checkout on.")
 
+argsp = argsubparsers.add_parser("show-ref", help="List references.")
+
 
 def main(argv=sys.argv[1:]):
     args = argparser.parse_args(argv)

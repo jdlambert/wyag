@@ -2,6 +2,7 @@ import os
 import sys
 import configparser
 import zlib
+import collections
 
 from GitObject import GitObject, GitBlob, GitCommit, GitTree
 
@@ -137,6 +138,44 @@ class GitRepository:
             elif obj.fmt == b"blob":
                 with open(dest, "wb") as f:
                     f.write(obj.blobdata)
+
+    def ref_resolve(self, ref):
+        with open(self.repo_file(ref), "r") as fp:
+            data = fp.read()[:-1]
+            # Drop final \n ^^^^^
+        if data.startswith("ref: "):
+            return self.ref_resolve(data[5:])
+        else:
+            return data
+
+    def ref_list(self, path=None):
+        if path is None:
+            path = self.repo_dir("refs")
+        ret = collections.OrderedDict()
+
+        for f in sorted(os.listdir(path)):
+            can = os.path.join(path, f)
+            if os.path.isdir(can):
+                ret[f] = self.ref_list(can)
+            else:
+                ret[f] = self.ref_resolve(can)
+
+        return ret
+
+    def show_ref(self, refs, with_hash=True, prefix=""):
+        for k, v in refs.items():
+            if type(v) == str:
+                print(
+                    "{0}{1}{2}".format(
+                        v + " " if with_hash else "", prefix + "/" if prefix else "", k,
+                    )
+                )
+            else:
+                self.show_ref(
+                    v,
+                    with_hash=with_hash,
+                    prefix="{0}{1}{2}".format(prefix, "/" if prefix else "", k),
+                )
 
     @staticmethod
     def create(path):

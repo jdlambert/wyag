@@ -46,3 +46,7 @@ class Handlers:
             os.makedirs(args.path)
 
         repo.tree_checkout(obj, os.path.realpath(args.path).encode())
+
+    def show_ref(args):
+        repo = GitRepository.find()
+        repo.show_ref(repo.ref_list(), prefix="refs")
