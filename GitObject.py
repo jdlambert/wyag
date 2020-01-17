@@ -44,6 +44,25 @@ class GitObject:
 
         return sha
 
+    @staticmethod
+    def hash(fd, fmt, repo=None):
+        data = fd.read()
+
+        # Choose constructor depending on
+        # object type found in header.
+        if fmt == b"commit":
+            obj = GitCommit(repo, data)
+        elif fmt == b"tree":
+            obj = GitTree(repo, data)
+        elif fmt == b"tag":
+            obj = GitTag(repo, data)
+        elif fmt == b"blob":
+            obj = GitBlob(repo, data)
+        else:
+            raise Exception(f"Unknown type {fmt}!")
+
+        return obj.object_write(repo)
+
 
 class GitBlob(GitObject):
 
