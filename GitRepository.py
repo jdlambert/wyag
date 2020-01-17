@@ -2,6 +2,7 @@ import os
 import configparser
 import zlib
 
+from GitObject import GitObject, GitCommit
 
 class GitRepository:
     """A git repository"""
@@ -64,7 +65,7 @@ class GitRepository:
         """Read object object_id from Git repository repo.  Return a
         GitObject whose exact type depends on the object."""
 
-        path = repo.repo_file("objects", sha[0:2], sha[2:])
+        path = self.repo_file("objects", sha[0:2], sha[2:])
 
         with open(path, "rb") as f:
             raw = zlib.decompress(f.read())
@@ -92,7 +93,7 @@ class GitRepository:
                 raise Exception(f"Unknown type {fmt.decode('ascii')} for object {sha}")
 
             # Call constructor and return object
-            return c(repo, raw[y + 1 :])
+            return c(self, raw[y + 1 :])
 
     def object_find(self, name, fmt=None, follow=True):
         return name
@@ -100,6 +101,28 @@ class GitRepository:
     def cat_file(self, obj, fmt=None):
         obj = self.object_read(self.object_find(obj, fmt=fmt))
         sys.stdout.buffer.write(obj.serialize())
+
+    def log_graphviz(self, sha, seen=None):
+
+        seen = seen or set()
+
+        if sha in seen:
+            return
+        seen.add(sha)
+
+        commit = self.object_read(sha)
+        assert commit.fmt == b'commit'
+
+        if b'parent' not in commit.kvlm.keys():
+            # Base case: the initial commit.
+            return
+
+        parents = commit.kvlm[b'parent']
+
+        for parent in parents:
+            parent = parent.decode("ascii")
+            print(f"c_{sha} -> c_{parent};")
+            self.log_graphviz(parent, seen)
 
     @staticmethod
     def create(path):

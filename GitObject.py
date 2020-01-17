@@ -19,9 +19,9 @@ def kvlm_parse(raw, start=0, kvs=None):
     # case find returns -1), we assume a blank line.  A blank line
     # means the remainder of the data is the message.
     if (space < 0) or (newline < space):
-        assert nl == start
-        kvs[b""] = raw[start + 1 :]
-        return dct
+        assert newline == start
+        kvs[b""] = raw[start + 1:]
+        return kvs
 
     # Recursive case
     # ==============
@@ -132,3 +132,12 @@ class GitBlob(GitObject):
 
     def deserialize(self, data):
         self.blobdata = data
+
+class GitCommit(GitObject):
+    fmt=b'commit'
+
+    def deserialize(self, data):
+        self.kvlm = kvlm_parse(data)
+
+    def serialize(self):
+        return kvlm_serialize(self.kvlm)
