@@ -97,9 +97,71 @@ class GitRepository:
 
             # Call constructor and return object
             return c(self, raw[y + 1 :])
+    
+    def object_resolve(self, name):
+        candidates = list()
+        hash_re = re.compile(r"^[0-9A-Fa-f]{1,16}$")
+
+        # Empty string?  Abort.
+        if not name.strip():
+            return None
+
+        # Head is nonambiguous
+        if name == "HEAD":
+            return [ self.ref_resolve("HEAD") ]
+
+
+        if hash_re.match(name):
+            if len(name) == 40:
+                # This is a complete hash
+                return [ name.lower() ]
+            elif len(name) >= 4:
+                # This is a small hash 4 seems to be the minimal length
+                # for git to consider something a short hash.
+                # This limit is documented in man git-rev-parse
+                name = name.lower()
+                prefix = name[0:2]
+                path = self.repo_dir("objects", prefix, mkdir=False)
+                if path:
+                    rem = name[2:]
+                    for f in os.listdir(path):
+                        if f.startswith(rem):
+                            candidates.append(prefix + f)
+
+        return candidates
+
 
     def object_find(self, name, fmt=None, follow=True):
-        return name
+        sha = self.object_resolve(name)
+
+        if not sha:
+            raise Exception(f"No such reference {name}.")
+
+        if len(sha) > 1:
+            raise Exception(f"Ambiguous reference {name}: Candidates are:\n - {'\n -'.join(sha)}.")
+
+        sha = sha[0]
+
+        if not fmt:
+            return sha
+
+        while True:
+            obj = self.object_read(sha)
+
+            if obj.fmt == fmt:
+                return sha
+
+            if not follow:
+                return None
+
+            # Follow tags
+            if obj.fmt == b'tag':
+                sha = obj.kvlm[b'object'].decode("ascii")
+            elif obj.fmt == b'commit' and fmt == b'tree':
+                sha = obj.kvlm[b'tree'].decode("ascii")
+            else:
+                return None
+            return name
 
     def cat_file(self, obj, fmt=None):
         obj = self.object_read(self.object_find(obj, fmt=fmt))

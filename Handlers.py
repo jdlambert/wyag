@@ -55,11 +55,7 @@ class Handlers:
         repo = GitRepository.find()
 
         if args.name:
-            repo.tag_create(
-                args.name,
-                args.object,
-                args.create_tag_object
-            )
+            repo.tag_create(args.name, args.object, args.create_tag_object)
         else:
             refs = repo.ref_list()
             repo.show_ref(refs["tags"], with_hash=False)
