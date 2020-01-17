@@ -1,9 +1,7 @@
 import argparse
 import collections
-import hashlib
 import re
 import sys
-import zlib
 
 from Handlers import Handlers
 
@@ -20,6 +18,17 @@ argsp.add_argument(
     default=".",
     help="Where to create the repository.",
 )
+
+argsp = argsubparsers.add_parser(
+    "cat-file", help="Provide content of repository objects"
+)
+argsp.add_argument(
+    "type",
+    metavar="type",
+    choices=["blob", "commit", "tag", "tree"],
+    help="Specify the type",
+)
+argsp.add_argument("object", metavar="object", help="The object to display")
 
 
 def main(argv=sys.argv[1:]):
