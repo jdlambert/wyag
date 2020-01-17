@@ -20,7 +20,7 @@ def kvlm_parse(raw, start=0, kvs=None):
     # means the remainder of the data is the message.
     if (space < 0) or (newline < space):
         assert newline == start
-        kvs[b""] = raw[start + 1:]
+        kvs[b""] = [raw[start + 1:]]
         return kvs
 
     # Recursive case
@@ -53,7 +53,7 @@ def kvlm_serialize(kvlm):
     return b"\n".join(
         [
             key + b" " + val.replace(b"\n", b"\n ")
-            for key, vals in kvlm
+            for key, vals in kvlm.items()
             if key != b""
             for val in vals
         ]
