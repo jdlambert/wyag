@@ -177,6 +177,33 @@ class GitRepository:
                     prefix="{0}{1}{2}".format(prefix, "/" if prefix else "", k),
                 )
 
+    def tag_create(self, name, reference, create_tag_object):
+        # get the GitObject from the object reference
+        sha = self.object_find(reference)
+
+        if create_tag_object:
+            # create tag object (commit)
+            tag = GitTag(self)
+            tag.kvlm = collections.OrderedDict()
+            tag.kvlm[b"object"] = sha.encode()
+            tag.kvlm[b"type"] = b"commit"
+            tag.kvlm[b"tag"] = name.encode()
+            # TODO: add real messages and tagger
+            tag.kvlm[b"tagger"] = b"The soul eater <grim@reaper.net>"
+            tag.kvlm[
+                b""
+            ] = b"This is the commit message that should have come from the user\n"
+            tag_sha = tag.object_write()
+            # create reference
+            self.ref_create("tags/" + name, tag_sha)
+        else:
+            # create lightweight tag (ref)
+            self.ref_create("tags/" + name, sha)
+
+    def ref_create(self, ref_name, sha):
+        with open(self.repo_file("refs/" + ref_name), "w") as fp:
+            fp.write(sha + "\n")
+
     @staticmethod
     def create(path):
         """Create a new repository at path."""

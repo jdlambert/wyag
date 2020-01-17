@@ -202,3 +202,7 @@ class GitTree(GitObject):
 
     def serialize(self):
         return tree_serialize(self)
+
+
+class GitTag(GitCommit):
+    fmt = b"tag"
