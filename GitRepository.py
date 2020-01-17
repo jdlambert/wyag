@@ -3,6 +3,7 @@ import sys
 import configparser
 import zlib
 import collections
+import re
 
 from GitObject import GitObject, GitBlob, GitCommit, GitTree
 
@@ -97,7 +98,7 @@ class GitRepository:
 
             # Call constructor and return object
             return c(self, raw[y + 1 :])
-    
+
     def object_resolve(self, name):
         candidates = list()
         hash_re = re.compile(r"^[0-9A-Fa-f]{1,16}$")
@@ -108,13 +109,12 @@ class GitRepository:
 
         # Head is nonambiguous
         if name == "HEAD":
-            return [ self.ref_resolve("HEAD") ]
-
+            return [self.ref_resolve("HEAD")]
 
         if hash_re.match(name):
             if len(name) == 40:
                 # This is a complete hash
-                return [ name.lower() ]
+                return [name.lower()]
             elif len(name) >= 4:
                 # This is a small hash 4 seems to be the minimal length
                 # for git to consider something a short hash.
@@ -130,7 +130,6 @@ class GitRepository:
 
         return candidates
 
-
     def object_find(self, name, fmt=None, follow=True):
         sha = self.object_resolve(name)
 
@@ -138,7 +137,10 @@ class GitRepository:
             raise Exception(f"No such reference {name}.")
 
         if len(sha) > 1:
-            raise Exception(f"Ambiguous reference {name}: Candidates are:\n - {'\n -'.join(sha)}.")
+            candidates = "\n -".join(sha)
+            raise Exception(
+                f"Ambiguous reference {name}: Candidates are:\n - {candidates}."
+            )
 
         sha = sha[0]
 
@@ -155,10 +157,10 @@ class GitRepository:
                 return None
 
             # Follow tags
-            if obj.fmt == b'tag':
-                sha = obj.kvlm[b'object'].decode("ascii")
-            elif obj.fmt == b'commit' and fmt == b'tree':
-                sha = obj.kvlm[b'tree'].decode("ascii")
+            if obj.fmt == b"tag":
+                sha = obj.kvlm[b"object"].decode("ascii")
+            elif obj.fmt == b"commit" and fmt == b"tree":
+                sha = obj.kvlm[b"tree"].decode("ascii")
             else:
                 return None
             return name

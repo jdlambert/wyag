@@ -1,6 +1,4 @@
 import argparse
-import re
-import sys
 
 from Handlers import Handlers
 
@@ -70,6 +68,19 @@ argsp.add_argument("name", nargs="?", help="The new tag's name")
 argsp.add_argument(
     "object", default="HEAD", nargs="?", help="The object the new tag will point to"
 )
+
+argsp = argsubparsers.add_parser(
+    "rev-parse", help="Parse revision (or other object) identifiers"
+)
+argsp.add_argument(
+    "--wyag-type",
+    metavar="type",
+    dest="type",
+    choices=["blob", "commit", "tag", "tree"],
+    default=None,
+    help="Specify the expected type",
+)
+argsp.add_argument("name", help="The name to parse")
 
 
 def main(argv=sys.argv[1:]):

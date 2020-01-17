@@ -59,3 +59,11 @@ class Handlers:
         else:
             refs = repo.ref_list()
             repo.show_ref(refs["tags"], with_hash=False)
+
+    def rev_parse(args):
+        if args.type:
+            fmt = args.type.encode()
+
+        repo = GitRepository.find()
+
+        print(repo.object_find(args.name, args.type, follow=True))
