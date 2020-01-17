@@ -51,6 +51,12 @@ argsp.add_argument("path", help="Read object from <file>")
 argsp = argsubparsers.add_parser("log", help="Display history of a given commit.")
 argsp.add_argument("commit", default="HEAD", nargs="?", help="Commit to start at.")
 
+argsp = argsubparsers.add_parser(
+    "checkout", help="Checkout a commit inside of a directory."
+)
+argsp.add_argument("commit", help="The commit or tree to checkout.")
+argsp.add_argument("path", help="The EMPTY directory to checkout on.")
+
 
 def main(argv=sys.argv[1:]):
     args = argparser.parse_args(argv)

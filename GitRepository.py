@@ -3,7 +3,7 @@ import sys
 import configparser
 import zlib
 
-from GitObject import GitObject, GitCommit
+from GitObject import GitObject, GitBlob, GitCommit, GitTree
 
 
 class GitRepository:
@@ -125,6 +125,18 @@ class GitRepository:
             parent = parent.decode("ascii")
             print(f"c_{sha} -> c_{parent};")
             self.log_graphviz(parent, seen)
+
+    def tree_checkout(self, tree, path):
+        for item in tree.items:
+            obj = self.object_read(item.sha)
+            dest = os.path.join(path, item.path)
+
+            if obj.fmt == b"tree":
+                os.mkdir(dest)
+                self.tree_checkout(obj, dest)
+            elif obj.fmt == b"blob":
+                with open(dest, "wb") as f:
+                    f.write(obj.blobdata)
 
     @staticmethod
     def create(path):
