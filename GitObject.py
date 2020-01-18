@@ -181,7 +181,6 @@ def tree_parse(raw):
 
 
 def tree_serialize(obj):
-    # @FIXME Add serializer!
     return "".join(
         [
             item.mode
